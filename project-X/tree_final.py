@@ -1,8 +1,9 @@
-import os          # L1 step 2: listdir, path.join, isdir
+import os          # L1 step 2: listdir, path.join, isdir listing folders and checking size 
+
 import sys         # L3 step 11: sys.exit for bad input
 import csv         # L4 item 17: CSV output
-import fnmatch     # L3 step 14 and L4 item 20: glob patterns
-import argparse    # L2 steps 7 and 8: command line options
+import fnmatch     # L3 step 14 and L4 item 20: glob patterns matches names
+import argparse    # L2 steps 7 and 8: command line options reading options 
 
 
 # ================= HELPERS =================
@@ -23,6 +24,7 @@ def split_list(text, lower=False):
     if text != "":
         for part in text.split(","):
             part = part.strip()
+             #skip empty pieces
             if part != "":
                 if lower:
                     part = part.lower()
@@ -56,6 +58,7 @@ def check_folder(path):
 # walks the tree ONCE, children first, then adds up each folder.
 # every total is saved in the sizes dict so print_tree just looks it up
 # (no re-walking)
+#check everythin in the folder, calculate the size of the folder, if item of folder is a file add it to it, if folder same, then writeout the final sum beside the folder  
 def compute_sizes(folder, exclude, sizes):
     total = 0
     try:
@@ -126,8 +129,11 @@ def print_tree(folder, depth, prefix, counts, opt, ancestors):
     entries = get_entries(folder, names, opt)
 
     for index in range(len(entries)):
+        # take the iem in at this position
         name = entries[index]
+        # build the real path 
         full_path = os.path.join(folder, name)   # L1 step 3: need the full path
+        # give the full path
         is_link = os.path.islink(full_path)      # L3 step 13
 
         # L2 step 9: last item gets └──, the rest get ├──
@@ -186,6 +192,7 @@ def summarize(folder, rel, depth, writer, exclude):
     deepest_path = rel
     deepest_depth = depth
 
+# Tries to get a list of all files and folders inside the current directory using os.listdir.
     try:
         names = os.listdir(folder)
     except OSError:
@@ -193,7 +200,8 @@ def summarize(folder, rel, depth, writer, exclude):
     names.sort(key=str.lower)
 
     for name in names:
-        if is_excluded(name, exclude):          # item 20
+        # Checks if the item matches your ignore filters
+        if is_excluded(name, exclude):          # item 20 Glues the folder path and item name together to make a proper, complete system path
             continue
         full_path = os.path.join(folder, name)
         if rel == ".":
@@ -204,6 +212,7 @@ def summarize(folder, rel, depth, writer, exclude):
         if os.path.isdir(full_path):
             if os.path.islink(full_path):       # item 13
                 continue
+                # Depth + 1 to keep it going down to each subfolder until it finishes, then send it out ouput 
             c_files, c_total, c_lpath, c_lsize, c_dpath, c_ddepth = summarize(
                 full_path, child_rel, depth + 1, writer, exclude)
             files += c_files
@@ -215,6 +224,7 @@ def summarize(folder, rel, depth, writer, exclude):
                 deepest_depth = c_ddepth
                 deepest_path = c_dpath
         else:
+            # tries to get the size of the file then increase the file counter by 1 Glues the folder path and item name together to make a proper, complete system path
             try:
                 size = os.path.getsize(full_path)
             except OSError:
